@@ -1,21 +1,16 @@
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
+import java.io.*;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.ListIterator;
-import java.util.Scanner;
+import java.util.*;
 
-
+/**
+ * Work in progress.
+ */
 public class NeighborParityMaker {
 
     public static void makeParity(Path inputFile, Path outputFile) {
         ArrayList<Integer> numbers = new ArrayList<>();
-        ArrayList<Integer> evenElem = new ArrayList<>();
-        ArrayList<Integer> oddElem = new ArrayList<>();
+        HashMap<Integer, Integer> evenElem = new HashMap<>();
+        HashMap<Integer,Integer> oddElem = new HashMap<>();
         HashSet<Integer> used = new HashSet<>();
 
         boolean startSpace=false;
@@ -36,9 +31,9 @@ public class NeighborParityMaker {
 
                 if ((number % 2 == 0) == parity) {
                     if (parity)
-                        evenElem.add(i);
+                        evenElem.put(i,number);
                     else
-                        oddElem.add(i);
+                        oddElem.put(i,number);
                 } else
                     parity=!parity;
 
@@ -51,7 +46,8 @@ public class NeighborParityMaker {
             System.exit(-1);
         }
 
-        try (BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile.toFile()), StandardCharsets.UTF_8))) {
+        try (Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile.toFile()), java.nio.charset.StandardCharsets.UTF_8))) {
+
             int sub=evenElem.size() - oddElem.size();
             Integer num;
             switch (sub) {
@@ -80,12 +76,12 @@ public class NeighborParityMaker {
                 case 2:
                     if(startSpace && endSpace) {
                         num=evenElem.remove(0);
-                        out.write(num);
+                        out.write(numbers.get(num));
                         used.add(num);
                         num=evenElem.remove(0);
                         used.add(num);
                         write(out,numbers,oddElem,evenElem,used);
-                        out.write(num);
+                        out.write(numbers.get(num));
                         break;
                     }
                     else
@@ -94,8 +90,8 @@ public class NeighborParityMaker {
                 case -1:
                     if(!startSpace) {
                         num=oddElem.remove(0);
-                        out.write(num);
-                        used.add(numbers.get(num));
+                        out.write(numbers.get(num)+" ");
+                        used.add(num);
                         write(out,numbers,evenElem,oddElem,used);
                         break;
                     }
@@ -117,7 +113,7 @@ public class NeighborParityMaker {
                         num=oddElem.remove(0);
                         used.add(num);
                         write(out,numbers,evenElem,oddElem,used);
-                        out.write(num);
+                        out.write(numbers.get(num));
                         break;
                     }
                     else
@@ -134,24 +130,23 @@ public class NeighborParityMaker {
 
     }
 
-    private static void write(BufferedWriter out, ArrayList<Integer> numbers, ArrayList<Integer> smallest, ArrayList<Integer> biggest, HashSet<Integer> used) throws IOException
+    private static void write(Writer out, ArrayList<Integer> numbers, HashMap<Integer, Integer> smallest, HashMap<Integer, Integer> biggest, HashSet<Integer> used) throws IOException
     {
         ListIterator<Integer> iterator = numbers.listIterator();
-        ListIterator<Integer> iteratorBig = biggest.listIterator();
         Integer numberBuff;
         while (iterator.hasNext()) {
             int nextIndex = iterator.nextIndex();
-            if (smallest.contains(nextIndex)) {
+            if (smallest.containsKey(nextIndex)) {
                 numberBuff=iteratorBig.next();
                 iteratorBig.remove();
-                out.write(numbers.get(numberBuff));
+                out.write(numbers.get(numberBuff)+" ");//WARNING if you delete space you will use write(int), and that will write symbols, NaN. Try append.
                 used.add(numberBuff);
-                out.write(iterator.next());
+                out.write(iterator.next()+" ");
             } else {
-                if(biggest.contains(nextIndex) || used.contains(nextIndex))
+                if(biggest.containsKey(nextIndex) || used.contains(nextIndex))
                     iterator.next();
                 else
-                    out.write(iterator.next());
+                    out.write(iterator.next()+" ");
             }
         }
     }
